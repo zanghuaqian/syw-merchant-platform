@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>盛意旺商户平台 - 原型入口</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --nav-bg: #0f2744;
+      --accent: #1677ff;
+      --accent-hover: #4096ff;
+      --text: #111827;
+      --text-secondary: #4b5563;
+      --border: #e5e7eb;
+      --card-bg: #fff;
+      --page-bg: #eef1f6;
+      --radius: 10px;
+      --font: "Noto Sans SC", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      background: linear-gradient(160deg, #0f2744 0%, #1a3a5c 38%, var(--page-bg) 38%);
+      color: var(--text);
+    }
+    .header {
+      color: #fff;
+      text-align: center;
+      padding: 48px 24px 56px;
+    }
+    .header h1 {
+      margin: 0 0 10px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .header p {
+      margin: 0;
+      font-size: 15px;
+      opacity: 0.88;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 960px;
+      margin: -28px auto 48px;
+      padding: 0 24px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 24px rgba(15, 39, 68, 0.08);
+      padding: 28px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 32px rgba(15, 39, 68, 0.12);
+    }
+    .card-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 16px;
+    }
+    .card-icon.reconciliation { background: #e6f4ff; }
+    .card-icon.merchant { background: #f6ffed; }
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .card p {
+      margin: 0 0 18px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.7;
+      flex: 1;
+    }
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary {
+      background: #f3f4f6;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: #e5e7eb; }
+    .note {
+      margin-top: 28px;
+      padding: 16px 18px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .note strong { color: var(--text); }
+    .footer {
+      text-align: center;
+      padding: 0 24px 32px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>盛意旺商户平台 · 交互原型</h1>
+    <p>对账中心与运营中心 HTML 原型，含产品标注说明，可直接在线预览</p>
+  </header>
+
+  <main class="container">
+    <div class="grid">
+      <article class="card">
+        <div class="card-icon reconciliation">📊</div>
+        <h2>对账中心</h2>
+        <p>对账总览、门店交易排名、子层级/商户交易分析；支持从门店交易跳转至交易订单查询并自动带入筛选条件。</p>
+        <div class="links">
+          <a class="btn btn-primary" href="reconciliation-overview/index.html">进入对账总览</a>
+          <a class="btn btn-secondary" href="reconciliation-overview/transaction-order-query.html">交易订单查询</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-icon merchant">🏪</div>
+        <h2>运营中心</h2>
+        <p>子商户管理、层级树筛选、POS 导出、收银机具详情、门店详情与子商户详情抽屉等完整交互。</p>
+        <div class="links">
+          <a class="btn btn-primary" href="sub-merchant-management/index.html">进入子商户管理</a>
+        </div>
+      </article>
+    </div>
+
+    <div class="note">
+      <strong>产品标注说明：</strong>页面中带红色灯泡图标的区域为产品标注，鼠标悬停可查看需求说明。对账总览与运营中心顶栏可互相跳转。
+    </div>
+  </main>
+
+  <footer class="footer">盛意旺商户平台原型 · GitHub Pages 在线预览</footer>
+</body>
+</html>

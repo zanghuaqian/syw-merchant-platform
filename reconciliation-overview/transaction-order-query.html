@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>交易订单查询 - 盛意旺商户平台</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --nav-bg: #0f2744; --nav-hover: #1a3a5c; --accent: #1677ff; --accent-hover: #4096ff;
+      --sidebar-bg: #fff; --sidebar-active: #e6f4ff; --border: #e5e7eb;
+      --text: #111827; --text-secondary: #4b5563; --danger: #f5222d; --radius: 6px;
+      --font: "Noto Sans SC", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); color: var(--text); background: #eef1f6; min-height: 100vh; font-size: 13px; line-height: 1.5; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .top-nav { background: var(--nav-bg); color: #fff; height: 56px; display: flex; align-items: center; padding: 0 24px; gap: 28px; font-size: 14px; }
+    .brand { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .brand-logo { width: 28px; height: 28px; background: linear-gradient(135deg, #1677ff, #69b1ff); border-radius: 6px; }
+    .nav-links { display: flex; gap: 4px; flex: 1; }
+    .nav-links a { color: rgba(255,255,255,.85); text-decoration: none; padding: 8px 14px; border-radius: 6px; }
+    .nav-links a:hover { background: var(--nav-hover); }
+    .nav-links a.active { background: rgba(255,255,255,.12); color: #fff; }
+    .nav-right { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,.9); font-size: 13px; }
+
+    .layout { display: flex; min-height: calc(100vh - 56px); }
+    .sidebar { width: 200px; background: var(--sidebar-bg); border-right: 1px solid var(--border); padding: 12px 0; flex-shrink: 0; }
+    .side-item { display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: var(--text-secondary); text-decoration: none; font-size: 13px; border-left: 3px solid transparent; }
+    .side-item:hover { color: var(--accent); background: rgba(22,119,255,.04); }
+    .side-item.active { background: var(--sidebar-active); color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+    .side-group-title { padding: 10px 16px; font-size: 13px; color: var(--text-secondary); display: flex; justify-content: space-between; }
+
+    main { flex: 1; padding: 16px 20px 32px; overflow: auto; }
+    .breadcrumb { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
+    .breadcrumb span { color: var(--text); font-weight: 500; }
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 1px 3px rgba(15,39,68,.05); margin-bottom: 16px; }
+
+    .filter-card { padding: 16px 20px; }
+    .filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; }
+    .field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+    .field input, .field select {
+      width: 100%; height: 32px; padding: 0 10px; border: 1px solid #d9d9d9; border-radius: var(--radius);
+      font-size: 13px; font-family: inherit;
+    }
+    .field.full { grid-column: 1 / -1; }
+    .date-range { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .date-range input { flex: 1; min-width: 160px; }
+    .quick-link { color: var(--accent); margin-left: 8px; cursor: pointer; white-space: nowrap; }
+    .filter-actions { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; }
+    .btn { height: 32px; padding: 0 16px; border-radius: var(--radius); border: 1px solid #d9d9d9; background: #fff; cursor: pointer; font-size: 13px; font-family: inherit; }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .expand-link { color: var(--accent); margin-left: 8px; }
+
+    .stats-bar {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; background: #fff;
+    }
+    .stat-item { padding: 14px 16px; border-right: 1px solid var(--border); }
+    .stat-item:last-child { border-right: none; }
+    .stat-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+    .stat-value { font-size: 20px; font-weight: 700; }
+    .stat-value.red { color: var(--danger); }
+    .stat-value.blue { color: var(--accent); }
+
+    .table-card { padding: 16px 20px; }
+    .table-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .table-tools { display: flex; gap: 4px; color: var(--text-secondary); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    th { background: #fafafa; color: var(--text-secondary); font-weight: 500; white-space: nowrap; }
+    tr:hover td { background: #fafcff; }
+    .order-no-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .pay-icon { display: inline-block; width: 16px; height: 16px; border-radius: 3px; background: #1677ff; color: #fff; font-size: 10px; text-align: center; line-height: 16px; margin-right: 4px; vertical-align: middle; }
+    .tag-ok { display: inline-block; padding: 0 6px; border-radius: 2px; font-size: 11px; background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+    .tag-warn { display: inline-block; padding: 0 6px; border-radius: 2px; font-size: 11px; background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+    .empty-tip { text-align: center; padding: 40px; color: #bbb; }
+    .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--text-secondary); }
+
+    .query-hint {
+      padding: 10px 14px; margin-bottom: 16px; background: #e6f4ff; border: 1px solid #91caff;
+      border-radius: var(--radius); font-size: 13px; color: #0958d9;
+    }
+
+    @media (max-width: 1000px) {
+      .filter-grid { grid-template-columns: 1fr 1fr; }
+      .stats-bar { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-nav">
+    <div class="brand"><span class="brand-logo"></span>盛意旺 | 商户平台</div>
+    <nav class="nav-links">
+      <a href="#">首页</a><a href="#">资金中心</a>
+      <a href="index.html" class="active">对账中心</a>
+      <a href="../sub-merchant-management/index.html">运营中心</a>
+      <a href="#">跨境中心</a><a href="#">账户中心</a>
+    </nav>
+    <div class="nav-right"><span>🔔</span><span>上海蓝克电子... (39162731)</span></div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <a class="side-item" href="index.html">对账总览</a>
+      <div class="side-group-title">交易管理 <span>▼</span></div>
+      <a class="side-item active" href="transaction-order-query.html" style="padding-left:28px">交易订单查询</a>
+      <div class="side-group-title">账单管理 <span>▼</span></div>
+      <div class="side-group-title">资金流水 <span>▼</span></div>
+      <div class="side-group-title">财务凭证 <span>▼</span></div>
+    </aside>
+
+    <main>
+      <div class="breadcrumb">对账中心 / <span>交易订单查询</span></div>
+      <div class="query-hint" id="query-hint" style="display:none"></div>
+
+      <div class="card filter-card">
+        <div class="filter-grid">
+          <div class="field">
+            <label>商户层级</label>
+            <select id="f-level"><option value="">请选择</option><option>臧华倩</option><option>全部层级</option></select>
+          </div>
+          <div class="field">
+            <label>商户</label>
+            <input type="text" id="f-merchant" placeholder="请输入商户号" />
+          </div>
+          <div class="field">
+            <label>所属门店</label>
+            <select id="f-store"><option value="">请选择所属门店</option></select>
+          </div>
+          <div class="field full">
+            <label>交易时间</label>
+            <div class="date-range">
+              <input type="datetime-local" id="f-time-start" />
+              <span>至</span>
+              <input type="datetime-local" id="f-time-end" />
+              <span class="quick-link" id="btn-today">今日</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>订单号</label>
+            <input type="text" id="f-order-no" placeholder="请输入订单号" />
+          </div>
+          <div class="field">
+            <label>订单类型</label>
+            <select id="f-order-type"><option value="">全部</option><option>收款</option><option>退款</option></select>
+          </div>
+          <div class="field">
+            <label>订单状态</label>
+            <select id="f-order-status"><option value="">全部</option><option>支付成功</option><option>待支付</option></select>
+          </div>
+          <div class="field">
+            <label>支付方式</label>
+            <select id="f-pay-method"><option value="">全部</option><option>支付宝</option><option>微信</option><option>银联</option></select>
+          </div>
+          <div class="filter-actions">
+            <button type="button" class="btn btn-primary" id="btn-search">搜索</button>
+            <button type="button" class="btn" id="btn-reset">重置</button>
+            <span class="expand-link">展开 ▼</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stat-item"><div class="stat-label">实际收入金额</div><div class="stat-value red" id="stat-income">0.00</div></div>
+        <div class="stat-item"><div class="stat-label">收款金额(笔)</div><div class="stat-value blue" id="stat-receive">0.00</div></div>
+        <div class="stat-item"><div class="stat-label">手续费金额</div><div class="stat-value" id="stat-fee">0.00</div></div>
+        <div class="stat-item"><div class="stat-label">退款金额(笔)</div><div class="stat-value" id="stat-refund">0.00</div></div>
+      </div>
+
+      <div class="card table-card">
+        <div class="table-toolbar">
+          <button type="button" class="btn">批量下载</button>
+          <div class="table-tools"><span title="刷新">↻</span><span title="导出">⬇</span><span title="列设置">≡</span><span title="全屏">⛶</span></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>订单号</th><th>支付时间</th><th>所属商户</th><th>商户简称</th><th>所属门店</th>
+                <th>订单金额</th><th>支付金额</th><th>手续费</th><th>订单状态</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="order-tbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination"><span id="page-total">共 0 条</span></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const STORE_OPTIONS = [
+      { no: '127101', name: '罗玲德浦东店', merchantNo: '39913172' },
+      { no: '127102', name: '刘冰天河店', merchantNo: '39796109' },
+      { no: '127103', name: '张欣谋南山店', merchantNo: '39751292' },
+      { no: '127104', name: '罗玲德徐汇店', merchantNo: '39913172' },
+      { no: '127105', name: '刘冰朝阳店', merchantNo: '39796109' }
+    ];
+
+    const ALL_ORDERS = [
+      { orderNo: '202606160001', outOrderNo: 'OUT202606160001', payTime: '2026-06-16 10:23:15', merchantNo: '39913172', merchantName: '罗玲德', shortName: '罗玲德浦东', storeNo: '127101', storeName: '罗玲德浦东店', amount: '119.00', payAmount: '119.00', fee: '0.00', status: '支付成功', payMethod: '支付宝', level: '臧华倩' },
+      { orderNo: '202606160002', outOrderNo: 'OUT202606160002', payTime: '2026-06-16 11:05:42', merchantNo: '39913172', merchantName: '罗玲德', shortName: '罗玲德浦东', storeNo: '127101', storeName: '罗玲德浦东店', amount: '58.00', payAmount: '58.00', fee: '0.00', status: '待支付', payMethod: '支付宝', level: '臧华倩' },
+      { orderNo: '202606160003', outOrderNo: 'OUT202606160003', payTime: '2026-06-16 09:12:08', merchantNo: '39796109', merchantName: '刘冰', shortName: '刘冰天河', storeNo: '127102', storeName: '刘冰天河店', amount: '500.00', payAmount: '500.00', fee: '1.25', status: '支付成功', payMethod: '微信', level: '臧华倩' },
+      { orderNo: '202606160004', outOrderNo: 'OUT202606160004', payTime: '2026-06-16 14:30:00', merchantNo: '39751292', merchantName: '张欣谋', shortName: '张欣谋南山', storeNo: '127103', storeName: '张欣谋南山店', amount: '88.00', payAmount: '88.00', fee: '0.22', status: '支付成功', payMethod: '银联', level: '臧华倩' }
+    ];
+
+    function parseParams() {
+      const p = new URLSearchParams(location.search);
+      return {
+        level: p.get('level') || '',
+        merchantNo: p.get('merchantNo') || '',
+        merchantName: p.get('merchantName') || '',
+        storeNo: p.get('storeNo') || '',
+        storeName: p.get('storeName') || '',
+        date: p.get('date') || ''
+      };
+    }
+
+    function toDateTimeLocal(dateStr, end) {
+      if (!dateStr) return '';
+      return end ? `${dateStr}T23:59` : `${dateStr}T00:00`;
+    }
+
+    function initStoreOptions(selectedNo) {
+      const sel = document.getElementById('f-store');
+      sel.innerHTML = '<option value="">请选择所属门店</option>' +
+        STORE_OPTIONS.map(s => `<option value="${s.no}">【${s.no}】${s.name}</option>`).join('');
+      if (selectedNo) sel.value = selectedNo;
+    }
+
+    function applyUrlParams() {
+      const p = parseParams();
+      if (p.level) document.getElementById('f-level').value = p.level;
+      if (p.merchantNo) document.getElementById('f-merchant').value = p.merchantNo;
+      initStoreOptions(p.storeNo);
+      if (p.date) {
+        document.getElementById('f-time-start').value = toDateTimeLocal(p.date, false);
+        document.getElementById('f-time-end').value = toDateTimeLocal(p.date, true);
+      }
+      if (p.storeNo || p.merchantNo) {
+        const hint = document.getElementById('query-hint');
+        hint.style.display = 'block';
+        hint.textContent = `已从对账总览带入查询条件：层级「${p.level || '-'}」、商户号「${p.merchantNo || '-'}」、门店「${p.storeNo ? '【' + p.storeNo + '】' + (p.storeName || '') : '-'}」、日期「${p.date || '-'}」`;
+      }
+    }
+
+    function filterOrders() {
+      const level = document.getElementById('f-level').value;
+      const merchantNo = document.getElementById('f-merchant').value.trim();
+      const storeNo = document.getElementById('f-store').value;
+      const orderNo = document.getElementById('f-order-no').value.trim();
+      const orderStatus = document.getElementById('f-order-status').value;
+      const payMethod = document.getElementById('f-pay-method').value;
+      const start = document.getElementById('f-time-start').value;
+      const end = document.getElementById('f-time-end').value;
+
+      return ALL_ORDERS.filter(o => {
+        if (level && level !== '全部层级' && o.level !== level) return false;
+        if (merchantNo && !o.merchantNo.includes(merchantNo)) return false;
+        if (storeNo && o.storeNo !== storeNo) return false;
+        if (orderNo && !o.orderNo.includes(orderNo) && !o.outOrderNo.includes(orderNo)) return false;
+        if (orderStatus && o.status !== orderStatus) return false;
+        if (payMethod && o.payMethod !== payMethod) return false;
+        if (start && o.payTime < start.replace('T', ' ')) return false;
+        if (end && o.payTime > end.replace('T', ' ')) return false;
+        return true;
+      });
+    }
+
+    function renderOrders() {
+      const rows = filterOrders();
+      const tbody = document.getElementById('order-tbody');
+      document.getElementById('page-total').textContent = '共 ' + rows.length + ' 条';
+
+      let income = 0, receive = 0, fee = 0, refund = 0, receiveCount = 0, refundCount = 0;
+      rows.forEach(o => {
+        if (o.status === '支付成功') {
+          income += parseFloat(o.payAmount);
+          receive += parseFloat(o.payAmount);
+          receiveCount++;
+          fee += parseFloat(o.fee);
+        }
+      });
+
+      document.getElementById('stat-income').textContent = income.toFixed(2);
+      document.getElementById('stat-receive').textContent = receive.toFixed(2) + (receiveCount ? ` (${receiveCount}笔)` : '');
+      document.getElementById('stat-fee').textContent = fee.toFixed(2);
+      document.getElementById('stat-refund').textContent = refund.toFixed(2) + (refundCount ? ` (${refundCount}笔)` : '');
+
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="10" class="empty-tip">暂无数据</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.map(o => `
+        <tr>
+          <td>
+            <div><span class="pay-icon">支</span>${o.orderNo}</div>
+            <div class="order-no-sub">${o.outOrderNo}</div>
+          </td>
+          <td>${o.payTime}</td>
+          <td>${o.merchantNo}<br><span style="color:var(--text-secondary);font-size:12px">${o.merchantName}</span></td>
+          <td>${o.shortName}</td>
+          <td>${o.storeNo ? '【' + o.storeNo + '】' + o.storeName : '-'}</td>
+          <td>${o.amount}</td>
+          <td>${o.payAmount}</td>
+          <td>${o.fee}</td>
+          <td>${o.status === '支付成功' ? '<span class="tag-ok">支付成功</span>' : '<span class="tag-warn">待支付</span>'}</td>
+          <td><a href="#">详情</a></td>
+        </tr>
+      `).join('');
+    }
+
+    function resetForm() {
+      document.getElementById('f-level').value = '';
+      document.getElementById('f-merchant').value = '';
+      document.getElementById('f-store').value = '';
+      document.getElementById('f-order-no').value = '';
+      document.getElementById('f-order-type').value = '';
+      document.getElementById('f-order-status').value = '';
+      document.getElementById('f-pay-method').value = '';
+      document.getElementById('f-time-start').value = '';
+      document.getElementById('f-time-end').value = '';
+      document.getElementById('query-hint').style.display = 'none';
+      renderOrders();
+    }
+
+    document.getElementById('btn-search').addEventListener('click', renderOrders);
+    document.getElementById('btn-reset').addEventListener('click', resetForm);
+    document.getElementById('btn-today').addEventListener('click', () => {
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById('f-time-start').value = toDateTimeLocal(today, false);
+      document.getElementById('f-time-end').value = toDateTimeLocal(today, true);
+    });
+
+    initStoreOptions('');
+    applyUrlParams();
+    renderOrders();
+  </script>
+</body>
+</html>

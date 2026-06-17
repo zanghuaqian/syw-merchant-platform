@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>子商户管理 - 盛意旺商户平台</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="../assets/product-annotation/product-annotation.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="../assets/product-annotation/product-annotation.js" defer></script>
+  <style>
+    :root {
+      --nav-bg: #0f2744; --nav-hover: #1a3a5c; --accent: #1677ff; --accent-hover: #4096ff;
+      --sidebar-bg: #f5f7fa; --sidebar-active: #e6f4ff; --border: #e5e7eb;
+      --text: #111827; --text-secondary: #4b5563; --success: #52c41a; --radius: 6px;
+      --font: "Noto Sans SC", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); color: var(--text); background: #eef1f6; min-height: 100vh; font-size: 13px; line-height: 1.5; }
+    a { color: var(--accent); text-decoration: none; cursor: pointer; }
+    a:hover { text-decoration: underline; }
+
+    .top-nav { background: var(--nav-bg); color: #fff; height: 56px; display: flex; align-items: center; padding: 0 24px; gap: 28px; font-size: 14px; }
+    .brand { font-weight: 700; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+    .brand-logo { width: 28px; height: 28px; background: linear-gradient(135deg, #1677ff, #69b1ff); border-radius: 6px; }
+    .nav-links { display: flex; gap: 4px; flex: 1; }
+    .nav-links a { color: rgba(255,255,255,.85); text-decoration: none; padding: 8px 14px; border-radius: 6px; }
+    .nav-links a:hover { background: var(--nav-hover); }
+    .nav-links a.active { background: rgba(255,255,255,.12); color: #fff; }
+    .nav-right { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,.9); font-size: 13px; }
+
+    .layout { display: flex; min-height: calc(100vh - 56px - 72px); }
+    .sidebar { width: 200px; background: var(--sidebar-bg); border-right: 1px solid var(--border); padding: 12px 0; flex-shrink: 0; }
+    .side-group-title { padding: 8px 16px; font-size: 13px; font-weight: 500; display: flex; justify-content: space-between; }
+    .side-item { display: block; padding: 9px 16px 9px 28px; color: var(--text-secondary); text-decoration: none; font-size: 13px; border-left: 3px solid transparent; }
+    .side-item.top { padding-left: 16px; }
+    .side-item:hover { color: var(--accent); background: rgba(22,119,255,.04); }
+    .side-item.active { background: var(--sidebar-active); color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+
+    main { flex: 1; padding: 16px 20px 24px; overflow: auto; }
+    .breadcrumb { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
+    .breadcrumb span { color: var(--text); font-weight: 500; }
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 1px 3px rgba(15,39,68,.05); }
+    .search-card { padding: 16px 20px; margin-bottom: 12px; }
+    .search-row { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: flex-end; }
+    .field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+    .field input, .field select { height: 32px; padding: 0 10px; border: 1px solid #d9d9d9; border-radius: var(--radius); font-size: 13px; font-family: inherit; min-width: 180px; }
+    .btn { height: 32px; padding: 0 16px; border-radius: var(--radius); border: 1px solid #d9d9d9; background: #fff; cursor: pointer; font-size: 13px; font-family: inherit; }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+    .expand-link { color: var(--accent); font-size: 13px; margin-left: 8px; cursor: pointer; }
+
+    .content-split { display: flex; min-height: 520px; }
+    .tree-panel { width: 220px; border-right: 1px solid var(--border); padding: 12px; flex-shrink: 0; }
+    .tree-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+    .tree-search { position: relative; margin-bottom: 10px; }
+    .tree-search input { width: 100%; height: 30px; padding: 0 28px 0 10px; border: 1px solid #d9d9d9; border-radius: var(--radius); font-size: 12px; }
+    .tree-node { font-size: 12px; line-height: 1.8; }
+    .tree-node label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .tree-node .indent-1 { padding-left: 16px; }
+    .tree-node .indent-2 { padding-left: 32px; }
+
+    .table-panel { flex: 1; min-width: 0; padding: 12px 16px 16px; }
+    .table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .view-tabs { display: flex; }
+    .view-tab { padding: 6px 16px; border: 1px solid #d9d9d9; background: #fafafa; cursor: pointer; font-size: 13px; margin-right: -1px; }
+    .view-tab:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+    .view-tab:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+    .view-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; z-index: 1; position: relative; }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    th { background: #fafafa; color: var(--text-secondary); font-weight: 500; white-space: nowrap; }
+    tr:hover td { background: #fafcff; }
+    .op-links { white-space: nowrap; position: relative; }
+    .op-links > a { margin-right: 8px; }
+    .tag-ok { display: inline-block; padding: 0 6px; border-radius: 2px; font-size: 11px; background: #f6ffed; color: var(--success); border: 1px solid #b7eb8f; }
+
+    .more-wrap { display: inline-block; position: relative; }
+    .more-btn { color: var(--accent); cursor: pointer; border: none; background: none; font-size: 13px; font-family: inherit; padding: 0; }
+    .more-btn:hover { text-decoration: underline; }
+    .more-menu {
+      display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; min-width: 100px;
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0,0,0,.12); z-index: 100; padding: 4px 0;
+    }
+    .more-wrap.open .more-menu { display: block; }
+    .more-menu a { display: block; padding: 8px 14px; color: var(--text); text-decoration: none; font-size: 13px; }
+    .more-menu a:hover { background: #f5f7fa; text-decoration: none; color: var(--accent); }
+
+    .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--text-secondary); }
+    .page-btn { min-width: 28px; height: 28px; border: 1px solid #d9d9d9; background: #fff; border-radius: var(--radius); cursor: pointer; font-size: 12px; }
+    .page-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    .site-footer { background: #fff; border-top: 1px solid var(--border); padding: 16px 24px; text-align: center; font-size: 12px; color: var(--text-secondary); line-height: 1.8; }
+    .float-widgets { position: fixed; right: 16px; bottom: 100px; display: flex; flex-direction: column; gap: 8px; }
+    .float-btn { width: 40px; height: 40px; border-radius: 50%; background: #fff; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,.08); cursor: pointer; font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; }
+
+    .detail-view { display: none; }
+    .detail-view.active { display: block; }
+    .back-link { color: var(--accent); cursor: pointer; font-size: 13px; margin-bottom: 12px; display: inline-block; }
+    .detail-header h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+    .detail-meta { font-size: 13px; color: var(--text-secondary); }
+
+    .equip-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .equip-tab { padding: 12px 20px; margin-bottom: -1px; cursor: pointer; color: var(--text-secondary); border-bottom: 2px solid transparent; font-size: 14px; }
+    .equip-tab:hover { color: var(--accent); }
+    .equip-tab.active { color: var(--accent); font-weight: 600; border-bottom-color: var(--accent); }
+
+    .filter-box { background: #fafafa; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+    .filter-row { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: flex-end; }
+    .filter-actions { margin-left: auto; display: flex; gap: 8px; }
+    .equip-panel { display: none; }
+    .equip-panel.active { display: block; }
+    .empty-tip { text-align: center; padding: 40px; color: #bbb; }
+
+    /* 门店下拉搜索 */
+    .store-combo { position: relative; min-width: 220px; }
+    .store-combo input { width: 100%; min-width: 220px; }
+    .store-dropdown {
+      display: none; position: absolute; left: 0; right: 0; top: 100%; margin-top: 2px;
+      max-height: 200px; overflow-y: auto; background: #fff; border: 1px solid #d9d9d9;
+      border-radius: var(--radius); box-shadow: 0 4px 12px rgba(0,0,0,.1); z-index: 50;
+    }
+    .store-dropdown.open { display: block; }
+    .store-option { padding: 8px 10px; cursor: pointer; font-size: 13px; }
+    .store-option:hover, .store-option.active { background: #e6f4ff; color: var(--accent); }
+
+    /* 详情抽屉 */
+    .drawer-mask {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 1000;
+    }
+    .drawer-mask.open { display: block; }
+    .drawer {
+      position: fixed; top: 0; right: 0; width: min(480px, 100vw); height: 100vh;
+      background: #fff; box-shadow: -4px 0 24px rgba(0,0,0,.12); z-index: 1001;
+      transform: translateX(100%); transition: transform .25s ease, width .25s ease; display: flex; flex-direction: column;
+    }
+    .drawer.drawer-wide { width: min(560px, 100vw); }
+    .drawer.open { transform: translateX(0); }
+    .drawer-hd {
+      padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex;
+      align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .drawer-hd h3 { margin: 0; font-size: 16px; font-weight: 600; }
+    .drawer-close { border: none; background: none; font-size: 20px; cursor: pointer; color: #999; line-height: 1; }
+    .drawer-bd { flex: 1; overflow-y: auto; padding: 20px; }
+    .drawer-ft { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
+
+    .desc-grid { display: grid; grid-template-columns: 120px 1fr; gap: 12px 16px; font-size: 13px; margin-bottom: 20px; }
+    .desc-grid .k { color: var(--text-secondary); }
+    .desc-grid .v { color: var(--text); word-break: break-all; }
+
+    .section-title { font-size: 14px; font-weight: 600; margin: 20px 0 12px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+    .section-tip { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
+
+    .qr-preview {
+      margin: 20px auto; width: 220px; padding: 16px; border: 1px solid #e8e8e8; border-radius: 8px;
+      background: linear-gradient(180deg, #fff 0%, #f8fbff 100%); text-align: center;
+    }
+    .qr-preview .logo { font-weight: 700; color: var(--accent); font-size: 16px; margin-bottom: 4px; }
+    .qr-preview .store-name { font-size: 14px; margin-bottom: 10px; }
+    .qr-preview .qr-box {
+      width: 140px; height: 140px; margin: 0 auto 10px; background: #fff; border: 1px solid #eee;
+      display: flex; align-items: center; justify-content: center; font-size: 11px; color: #999;
+    }
+    .qr-preview .qr-no { font-size: 12px; color: var(--text-secondary); }
+    .qr-preview .pay-text { font-size: 13px; margin: 8px 0; }
+    .qr-preview .pay-icons { font-size: 11px; color: #999; }
+
+    .mini-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+    .mini-table th, .mini-table td { padding: 8px 10px; border: 1px solid #f0f0f0; text-align: left; }
+    .mini-table th { background: #fafafa; color: var(--text-secondary); font-weight: 500; }
+    .assoc-yes { color: var(--success); }
+    .assoc-no { color: var(--text-secondary); }
+
+    .print-settings { background: #fafafa; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 16px; }
+    .print-row { display: flex; margin-bottom: 10px; font-size: 13px; }
+    .print-row:last-child { margin-bottom: 0; }
+    .print-row .k { width: 100px; color: var(--text-secondary); flex-shrink: 0; }
+
+    .toast {
+      position: fixed; top: 72px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,.75); color: #fff; padding: 10px 20px; border-radius: 6px;
+      font-size: 13px; z-index: 3000; opacity: 0; transition: opacity .3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+
+    /* 门店详情抽屉 - 双列信息 */
+    .info-section-title { font-size: 14px; font-weight: 600; margin: 0 0 16px; }
+    .info-grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; font-size: 13px; }
+    .info-grid-2col .info-item .label { color: var(--text-secondary); margin-bottom: 6px; }
+    .info-grid-2col .info-item .value { color: var(--text); word-break: break-all; }
+    .info-grid-2col .info-item.full { grid-column: 1 / -1; }
+
+    .drawer-merchant-head { margin-bottom: 20px; }
+    .drawer-merchant-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .drawer-merchant-title .name { font-size: 16px; font-weight: 600; color: var(--text); }
+    .merchant-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px;
+      background: #e6f4ff; color: var(--accent); border: 1px solid #91caff;
+    }
+    .drawer-merchant-sub { font-size: 13px; color: var(--text-secondary); margin-top: 6px; }
+    .detail-section { margin-bottom: 24px; }
+    .detail-section:last-child { margin-bottom: 0; }
+    .detail-section-hd {
+      font-size: 14px; font-weight: 600; margin-bottom: 14px; padding-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .detail-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 32px; }
+    .detail-field .label { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+    .detail-field .value { font-size: 13px; color: var(--text); word-break: break-all; }
+    .detail-field.full { grid-column: 1 / -1; }
+    .phone-row { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .toggle-eye {
+      border: none; background: none; color: #8c8c8c; cursor: pointer; padding: 4px;
+      display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; line-height: 0;
+    }
+    .toggle-eye:hover { color: var(--accent); background: #f0f7ff; }
+    .eye-icon { width: 18px; height: 18px; display: block; }
+  </style>
+</head>
+<body>
+  <header class="top-nav">
+    <div class="brand"><span class="brand-logo"></span>盛意旺 | 商户平台</div>
+    <nav class="nav-links">
+      <a href="#">首页</a><a href="#">资金中心</a>
+      <a href="../reconciliation-overview/index.html">对账中心</a>
+      <a href="index.html" class="active">运营中心</a><a href="#">跨境中心</a><a href="#">账户中心</a>
+    </nav>
+    <div class="nav-right"><span>🔔</span><span>上海益充电子... (39162731)</span><span style="cursor:pointer">退出</span></div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <a class="side-item top" href="#">门店管理</a>
+      <div class="side-group-title">网购外卖 <span>▼</span></div>
+      <div class="side-group-title">总部商户管理 <span>▼</span></div>
+      <a class="side-item active" href="#">子商户管理</a>
+      <a class="side-item" href="#">层级管理</a>
+      <a class="side-item top" href="#">表单支付</a>
+      <div class="side-group-title">数电发票 <span>▼</span></div>
+      <a class="side-item top" href="#">收银机具管理</a>
+    </aside>
+
+    <main>
+      <div id="view-main" class="detail-view active">
+        <div class="breadcrumb">运营中心 / <span>子商户管理</span></div>
+        <div class="card search-card">
+          <div class="search-row">
+            <div class="field"><label>商户号</label><input type="text" id="search-id" placeholder="请输入商户号" /></div>
+            <div class="field"><label>商户名称</label><input type="text" id="search-name" placeholder="请输入商户名称" /></div>
+            <button type="button" class="btn btn-primary" id="btn-search">查询</button>
+            <button type="button" class="btn" id="btn-reset">重置</button>
+            <span class="expand-link">展开 ▼</span>
+          </div>
+        </div>
+        <div class="card content-split">
+          <div class="tree-panel">
+            <div class="tree-title">层级筛选</div>
+            <div class="tree-search"><input type="search" placeholder="搜索层级" /><span style="position:absolute;right:8px;top:6px;color:#999">🔍</span></div>
+            <div class="tree-node">
+              <label><input type="checkbox" /> 上海益充电子商务有限公司</label>
+              <div class="indent-1"><label><input type="checkbox" /> 华东地区</label>
+                <div class="indent-2"><label><input type="checkbox" /> 上海市场部</label></div>
+              </div>
+              <div class="indent-1"><label><input type="checkbox" /> 华南地区</label></div>
+              <div class="indent-1"><label><input type="checkbox" /> 华北地区</label></div>
+            </div>
+          </div>
+          <div class="table-panel">
+            <div class="table-toolbar">
+              <div class="view-tabs">
+                <div class="view-tab active" data-mode="all">展示所有商户</div>
+                <div class="view-tab" data-mode="direct">仅展示层级的直属商户</div>
+              </div>
+              <span class="export-with-tip" style="display:inline-flex;align-items:center;">
+                <button type="button" class="btn btn-primary" id="btn-export-pos">导出所有商户POS终端信息</button>
+                <span class="tooltip-icon"><i class="bi bi-lightbulb-fill"></i></span>
+                <div class="product-tip"><div class="product-tip-content">导出当前总部下属全部子商户的智能POS终端信息为 Excel，含终端号、商户号、小票名称等字段。该按钮需单独配置权限，目前仅麦颂总部商户可使用</div></div>
+              </span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>商户号</th><th>商户名称</th><th>商户简称</th><th>商户层级</th><th>更新时间</th><th style="min-width:200px">操作<span class="tooltip-icon"><i class="bi bi-lightbulb-fill"></i></span><div class="product-tip"><div class="product-tip-content">操作列默认展示「查看详情」「收银机具详情」；「变更层级」「解除绑定」「门店详情」收起到「更多」下拉</div></div></th></tr>
+                </thead>
+                <tbody id="merchant-tbody"></tbody>
+              </table>
+            </div>
+            <div class="pagination"><span id="page-total">共 5 条</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-equipment" class="detail-view">
+        <div class="back-link" id="back-from-equip">← 返回子商户管理</div>
+        <div class="breadcrumb">运营中心 / 子商户管理 / <span>收银机具详情</span></div>
+        <div class="card" style="padding:20px">
+          <div class="detail-header">
+            <h2 id="equip-title">收银机具详情</h2>
+            
+  <span class="tooltip-icon">
+    <i class="bi bi-lightbulb-fill"></i>
+  </span>
+  <div class="product-tip">
+    <div class="product-tip-content">查看单个子商户下五类收银机具，各 Tab 独立筛选与列表；点击详情打开只读抽屉，不可修改绑定或关联关系</div>
+  </div>
+            <div class="detail-meta" id="equip-meta"></div>
+          </div>
+          <div class="equip-tabs" id="equip-tabs">
+            <div class="equip-tab active" data-type="code">收款码牌</div>
+            <div class="equip-tab" data-type="pos">智能POS</div>
+            <div class="equip-tab" data-type="speaker">云音箱</div>
+            <div class="equip-tab" data-type="scanner">扫码王</div>
+            <div class="equip-tab" data-type="printer">云打印机</div>
+          </div>
+          <div id="equip-panels"></div>
+        </div>
+      </div>
+
+      <div id="view-stores" class="detail-view">
+        <div class="back-link" id="back-from-stores">← 返回子商户管理</div>
+        <div class="breadcrumb">运营中心 / 子商户管理 / <span>门店详情</span></div>
+        <div class="card" style="padding:20px">
+          <div class="detail-header">
+            <h2 id="store-title">门店详情</h2>
+            
+  <span class="tooltip-icon">
+    <i class="bi bi-lightbulb-fill"></i>
+  </span>
+  <div class="product-tip">
+    <div class="product-tip-content">展示子商户下属门店列表，支持按门店编号、门店名称筛选；点击详情在右侧抽屉查看门店信息，联系电话默认掩码且可切换明文</div>
+  </div>
+            <div class="detail-meta" id="store-meta"></div>
+          </div>
+          <div class="filter-box">
+            <div class="filter-row">
+              <div class="field"><label>门店编号</label><input type="text" id="store-f-no" placeholder="请输入门店编号" /></div>
+              <div class="field"><label>门店名称</label><input type="text" id="store-f-name" placeholder="请输入门店名称" /></div>
+              <div class="filter-actions">
+                <button type="button" class="btn btn-primary" id="store-btn-search">查询</button>
+                <button type="button" class="btn" id="store-btn-reset">重置</button>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>编号（内部，6位数）</th><th>门店编号</th><th>门店名称</th><th>门店负责人</th><th>创建时间</th><th>操作</th></tr></thead>
+              <tbody id="store-tbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination"><span id="store-page-total">共 0 条</span></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div>© 2023 上海盛付通电子支付服务有限公司</div>
+    <div>沪ICP备08007261号-5 | 客服热线 400-720-8888（09:00-20:00）</div>
+  </footer>
+  <div class="float-widgets"><div class="float-btn">反馈</div><div class="float-btn">下载</div></div>
+  <div class="toast" id="toast"></div>
+
+  <!-- 右侧详情抽屉（机具 / 门店 / 子商户） -->
+  
+  <span class="tooltip-icon">
+    <i class="bi bi-lightbulb-fill"></i>
+  </span>
+  <div class="product-tip">
+    <div class="product-tip-content">子商户「查看详情」以右侧抽屉展示基础/联系人/资质信息；联系人手机默认掩码，点击闭眼/睁眼图标切换明文，不可编辑</div>
+  </div>
+  <div class="drawer-mask" id="drawer-mask"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-hd"><h3 id="drawer-title">详情</h3><button type="button" class="drawer-close" id="drawer-close">×</button></div>
+    <div class="drawer-bd" id="drawer-body"></div>
+    <div class="drawer-ft" id="drawer-footer"></div>
+  </div>
+
+  <script>
+    const MERCHANTS = [
+      { id: '45989756', name: '上海益充电子商务有限公司', shortName: '上海益充', level: '上海益充电子商务有限公司', updateTime: '2025-12-08 14:32:10' },
+      { id: '45989757', name: '上海益充电子商务有限公司北京分公司', shortName: '北京分公司', level: '华北地区', updateTime: '2025-11-20 09:15:44' },
+      { id: '45989758', name: '上海益充电子商务有限公司广州分公司', shortName: '广州分公司', level: '华南地区', updateTime: '2025-10-05 16:48:22' },
+      { id: '45989759', name: '上海益充电子商务有限公司深圳分公司', shortName: '深圳分公司', level: '华南地区', updateTime: '2025-09-18 11:03:57' },
+      { id: '45989760', name: '上海益充电子商务有限公司杭州分公司', shortName: '杭州分公司', level: '华东地区', updateTime: '2025-08-30 08:26:31' }
+    ];
+
+    const MERCHANT_DETAILS = {
+      '45989756': {
+        type: '小微', industry: '家居/建材-未列入其他代码的建材批发(批发商)',
+        address: '上海市浦东新区张江高科技园区祖冲之路887号',
+        contactName: '张益充', contactPhone: '13812341234',
+        legalName: '张益充', legalIdType: '身份证', legalIdNo: '310115198801011234', legalIdExpiry: '2018-06-15 至 2038-06-15'
+      },
+      '45989757': {
+        type: '小微', industry: '批发和零售业-其他批发业',
+        address: '北京市朝阳区建国路88号SOHO现代城',
+        contactName: '王朝阳', contactPhone: '13690123456',
+        legalName: '王朝阳', legalIdType: '身份证', legalIdNo: '110105198902021122', legalIdExpiry: '2020-01-10 至 2040-01-10'
+      },
+      '45989758': {
+        type: '小微', industry: '批发和零售业-百货零售',
+        address: '广州市天河区天河路385号太古汇',
+        contactName: '陈天河', contactPhone: '13734567890',
+        legalName: '陈天河', legalIdType: '身份证', legalIdNo: '440106199003031133', legalIdExpiry: '2019-05-20 至 2039-05-20'
+      },
+      '45989759': {
+        type: '小微', industry: '信息传输、软件和信息技术服务业',
+        address: '深圳市南山区科技园南区高新南一道',
+        contactName: '刘南山', contactPhone: '13578901234',
+        legalName: '刘南山', legalIdType: '身份证', legalIdNo: '440305199104041144', legalIdExpiry: '2021-08-01 至 2041-08-01'
+      },
+      '45989760': {
+        type: '小微', industry: '批发和零售业-服装零售',
+        address: '杭州市西湖区文三路478号华星科技大厦',
+        contactName: '赵西湖', contactPhone: '13323456789',
+        legalName: '赵西湖', legalIdType: '身份证', legalIdNo: '330106199205051155', legalIdExpiry: '2017-12-12 至 2037-12-12'
+      }
+    };
+
+    const STORE_DATA = {
+      '45989756': [
+        { internalNo: '100001', storeNo: '081301', name: '上海益充总店', manager: '张经理', createTime: '2024-06-01 10:00:00', location: '上海市/浦东新区/张江/祖冲之路887号', phone: '13812341234', employeeNo: '7000232591001' },
+        { internalNo: '100002', storeNo: '081302', name: '上海益充浦东分店', manager: '李主管', createTime: '2024-08-15 14:30:00', location: '上海市/浦东新区/世纪大道/100号', phone: '13956789012', employeeNo: '7000232591002' }
+      ],
+      '45989757': [
+        { internalNo: '200001', storeNo: '127080', name: '北京朝阳门店', manager: '王店长', createTime: '2024-09-01 09:00:00', location: '北京市/朝阳区/建国路/88号', phone: '13690123456', employeeNo: '7000232592001' }
+      ],
+      '45989758': [
+        { internalNo: '300001', storeNo: '127081', name: '广州天河门店', manager: '陈经理', createTime: '2024-10-10 11:00:00', location: '广东省/广州市/天河区/天河路385号', phone: '13734567890', employeeNo: '7000232593001' }
+      ],
+      '45989759': [
+        { internalNo: '400001', storeNo: '127082', name: '深圳南山门店', manager: '刘店长', createTime: '2024-11-05 16:00:00', location: '广东省/深圳市/南山区/科技园南区', phone: '13578901234', employeeNo: '7000232594001' }
+      ],
+      '45989760': [
+        { internalNo: '500001', storeNo: '127083', name: '杭州西湖门店', manager: '赵主管', createTime: '2025-01-20 08:30:00', location: '浙江省/杭州市/西湖区/文三路478号', phone: '13323456789', employeeNo: '7000232595001' }
+      ]
+    };
+
+    const fmtStore = (storeNo, name) => `【${storeNo}】${name}`;
+    const dash = v => v || '-';
+
+    function maskPhone(phone) {
+      if (!phone || phone.length < 7) return phone || '-';
+      return phone.slice(0, 3) + '****' + phone.slice(-4);
+    }
+
+    function maskIdNo(idNo) {
+      if (!idNo || idNo.length < 8) return idNo || '-';
+      return idNo.slice(0, 2) + '*'.repeat(Math.max(idNo.length - 6, 4)) + idNo.slice(-4);
+    }
+
+    const EYE_OPEN = '<svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+    const EYE_CLOSED = '<svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.584 10.587a2 2 0 0 0 2.828 2.828"/><path d="M9.363 5.365A10.07 10.07 0 0 1 12 5c3.87 0 7 3.13 7 7 0 1.01-.21 1.97-.59 2.84"/><path d="M6.5 6.5C4.5 8.5 2 12 2 12s3.5 7 10 7c1.2 0 2.35-.2 3.4-.55"/><path d="M14.12 14.12A3 3 0 0 1 9.88 9.88"/></svg>';
+
+    function phoneToggleHtml(phone, prefix) {
+      return `<span class="phone-row">
+        <span id="${prefix}-display">${maskPhone(phone)}</span>
+        <button type="button" class="toggle-eye" id="${prefix}-toggle" aria-label="切换手机号显示" title="切换显示">${EYE_CLOSED}</button>
+      </span>`;
+    }
+
+    function bindPhoneToggle(displayId, toggleId, phone) {
+      const phoneEl = document.getElementById(displayId);
+      const toggleBtn = document.getElementById(toggleId);
+      if (!phoneEl || !toggleBtn) return;
+      let masked = true;
+      toggleBtn.innerHTML = EYE_CLOSED;
+      toggleBtn.addEventListener('click', () => {
+        masked = !masked;
+        phoneEl.textContent = masked ? maskPhone(phone) : phone;
+        toggleBtn.innerHTML = masked ? EYE_CLOSED : EYE_OPEN;
+      });
+    }
+
+    function setDrawerWide(wide) {
+      document.getElementById('drawer').classList.toggle('drawer-wide', !!wide);
+    }
+
+    const EQUIP_DATA = {
+      '45989756': {
+        codes: [
+          { codeNo: '1000580369', codeName: '-', storeId: '081301', storeName: '上海益充总店', codeType: '电子码牌', status: '已绑定', updateTime: '2025-05-25 13:54:07', bindMerchantId: '45989756', bindMerchantName: '上海益充电子商务有限公司' },
+          { codeNo: '1000580370', codeName: '张江一店', storeId: '081302', storeName: '上海益充浦东分店', codeType: '实体码牌', status: '已绑定', updateTime: '2025-04-10 09:20:00', bindMerchantId: '45989756', bindMerchantName: '上海益充电子商务有限公司' }
+        ],
+        pos: [
+          { sn: '000006049222004796', terminalNo: '290A0T40', terminalName: '终端初始化', terminalAlias: '益充总店POS', brandModel: '联迪/A8', storeId: '081301', storeName: '上海益充总店', posMerchantNo: '820290453990732', receiptName: '上海益充总店', installAddress: '祖冲之路666弄', status: '已绑定', bindMerchantId: '45989756', bindMerchantName: '上海益充电子商务有限公司',
+            relatedCodes: [{ codeNo: '771856235', codeName: '张江一店', associated: false }, { codeNo: '1000580369', codeName: '-', associated: true }] }
+        ],
+        speakers: [
+          { sn: 'WSDYFN621811', codeNo: '161468465', terminalName: '-', brandModel: '博实结/CS50', storeId: '081301', storeName: '上海益充总店', status: '已绑定', updateTime: '2025-03-18 14:22:00', bindMerchantId: '45989756', bindMerchantName: '上海益充电子商务有限公司',
+            relatedCodes: [{ codeNo: '1000118276', codeName: '1', associated: false }, { codeNo: '161468465', codeName: '-', associated: true }] }
+        ],
+        scanners: [
+          { sn: '0000010622C1BQ9D7059', terminalName: '-', brandModel: '-', storeId: '081302', storeName: '上海益充浦东分店', status: '已绑定', updateTime: '2025-02-20 11:30:00', bindMerchantId: '45989756', bindMerchantName: '上海益充电子商务有限公司' }
+        ],
+        printers: [
+          { sn: 'bsj00617', terminalName: '-', brandModel: '-', storeId: '081301', storeName: '上海益充总店', status: '已绑定', updateTime: '2025-01-15 16:00:00', bindMerchantId: '45989756', bindMerchantName: '上海益充电子商务有限公司', printCopies: '2份', servicePhone: '18361272199', printRefund: '关闭',
+            relatedCodes: [{ codeNo: '1000580354', codeName: '-', associated: false }] }
+        ]
+      },
+      '45989757': {
+        codes: [{ codeNo: '1000580401', codeName: '-', storeId: '127080', storeName: '北京朝阳门店', codeType: '电子码牌', status: '已绑定', updateTime: '2025-02-01 10:00:00', bindMerchantId: '45989757', bindMerchantName: '上海益充电子商务有限公司北京分公司' }],
+        pos: [{ sn: '00000104191XCA8B1322', terminalNo: '290A0F8M', terminalName: '北京朝阳POS', terminalAlias: '终端初始化', brandModel: '玖迪/A8', storeId: '127080', storeName: '北京朝阳门店', posMerchantNo: '820290453990801', receiptName: '北京朝阳门店', installAddress: '建国路88号', status: '已绑定', bindMerchantId: '45989757', bindMerchantName: '上海益充电子商务有限公司北京分公司', relatedCodes: [] }],
+        speakers: [], scanners: [], printers: []
+      },
+      '45989758': {
+        codes: [{ codeNo: '1000580501', codeName: '-', storeId: '127081', storeName: '广州天河门店', codeType: '电子码牌', status: '已绑定', updateTime: '2025-03-01 11:00:00', bindMerchantId: '45989758', bindMerchantName: '上海益充电子商务有限公司广州分公司' }],
+        pos: [{ sn: '000006049222004888', terminalNo: '290A0T50', terminalName: '广州天河POS', terminalAlias: '终端初始化', brandModel: '联迪/A8', storeId: '127081', storeName: '广州天河门店', posMerchantNo: '820290453990900', receiptName: '广州天河门店', installAddress: '天河路385号', status: '已绑定', bindMerchantId: '45989758', bindMerchantName: '上海益充电子商务有限公司广州分公司', relatedCodes: [] }],
+        speakers: [{ sn: 'WSDYFN621900', codeNo: '161468500', terminalName: '天河音箱', brandModel: '博实结/CS50', storeId: '127081', storeName: '广州天河门店', status: '已绑定', updateTime: '2025-03-10 14:00:00', bindMerchantId: '45989758', bindMerchantName: '上海益充电子商务有限公司广州分公司', relatedCodes: [] }],
+        scanners: [], printers: []
+      },
+      '45989759': {
+        codes: [], pos: [{ sn: '000006049222004999', terminalNo: '290A0T60', terminalName: '深圳南山POS', terminalAlias: '终端初始化', brandModel: '联迪/A8', storeId: '127082', storeName: '深圳南山门店', posMerchantNo: '820290453991000', receiptName: '深圳南山门店', installAddress: '科技园南区', status: '已绑定', bindMerchantId: '45989759', bindMerchantName: '上海益充电子商务有限公司深圳分公司', relatedCodes: [] }],
+        speakers: [], scanners: [{ sn: '0000010622C1BQ9D8000', terminalName: '-', brandModel: 'N7HD', storeId: '127082', storeName: '深圳南山门店', status: '已绑定', updateTime: '2025-04-05 15:00:00', bindMerchantId: '45989759', bindMerchantName: '上海益充电子商务有限公司深圳分公司' }], printers: []
+      },
+      '45989760': {
+        codes: [{ codeNo: '1000580601', codeName: '-', storeId: '127083', storeName: '杭州西湖门店', codeType: '实体码牌', status: '已绑定', updateTime: '2025-05-01 08:00:00', bindMerchantId: '45989760', bindMerchantName: '上海益充电子商务有限公司杭州分公司' }],
+        pos: [{ sn: '000006049222005000', terminalNo: '290A0T70', terminalName: '杭州西湖POS', terminalAlias: '终端初始化', brandModel: '联迪/A8', storeId: '127083', storeName: '杭州西湖门店', posMerchantNo: '820290453991100', receiptName: '杭州西湖门店', installAddress: '文三路478号', status: '已绑定', bindMerchantId: '45989760', bindMerchantName: '上海益充电子商务有限公司杭州分公司', relatedCodes: [] }],
+        speakers: [], scanners: [], printers: [{ sn: 'bsj00618', terminalName: '-', brandModel: '80mm', storeId: '127083', storeName: '杭州西湖门店', status: '已绑定', updateTime: '2025-05-12 11:00:00', bindMerchantId: '45989760', bindMerchantName: '上海益充电子商务有限公司杭州分公司', printCopies: '1份', servicePhone: '13800138000', printRefund: '开启', relatedCodes: [] }]
+      }
+    };
+
+    const POS_EXPORT = [
+      { terminalNo: '290A0T40', terminalName: '终端初始化', posMerchantNo: '820290453990732', sftMerchantNo: '45989756', merchantName: '上海益充电子商务有限公司', receiptName: '上海益充总店', terminalAddress: '上海市浦东新区张江高科技园区', terminalStatus: '正常', createTime: '2025-01-08 09:00:00' },
+      { terminalNo: '290A0F8M', terminalName: '北京朝阳POS', posMerchantNo: '820290453990801', sftMerchantNo: '45989757', merchantName: '上海益充电子商务有限公司北京分公司', receiptName: '北京朝阳门店', terminalAddress: '北京市朝阳区建国路88号', terminalStatus: '正常', createTime: '2025-02-05 09:30:00' },
+      { terminalNo: '290A0T50', terminalName: '广州天河POS', posMerchantNo: '820290453990900', sftMerchantNo: '45989758', merchantName: '上海益充电子商务有限公司广州分公司', receiptName: '广州天河门店', terminalAddress: '广州市天河区天河路385号', terminalStatus: '正常', createTime: '2025-03-05 10:00:00' },
+      { terminalNo: '290A0T60', terminalName: '深圳南山POS', posMerchantNo: '820290453991000', sftMerchantNo: '45989759', merchantName: '上海益充电子商务有限公司深圳分公司', receiptName: '深圳南山门店', terminalAddress: '深圳市南山区科技园南区', terminalStatus: '停用', createTime: '2025-04-01 09:00:00' },
+      { terminalNo: '290A0T70', terminalName: '杭州西湖POS', posMerchantNo: '820290453991100', sftMerchantNo: '45989760', merchantName: '上海益充电子商务有限公司杭州分公司', receiptName: '杭州西湖门店', terminalAddress: '杭州市西湖区文三路478号', terminalStatus: '待激活', createTime: '2025-05-10 10:00:00' }
+    ];
+
+    const EQUIP_PANELS = {
+      code: {
+        filters: [
+          { key: 'codeNo', label: '码牌编号', type: 'text', placeholder: '请输入码牌编号' },
+          { key: 'codeType', label: '码牌类型', type: 'select', options: ['全部', '电子码牌', '实体码牌'] },
+          { key: 'store', label: '绑定门店', type: 'store' }
+        ],
+        columns: ['码牌编号', '码牌名称', '绑定门店信息', '码牌类型', '更新时间', '操作']
+      },
+      pos: {
+        filters: [
+          { key: 'sn', label: '设备SN号', type: 'text', placeholder: '请输入设备SN号' },
+          { key: 'terminalNo', label: '终端号', type: 'text', placeholder: '请输入终端号' }
+        ],
+        columns: ['设备SN号', '终端号', '终端名称', '绑定门店信息', 'POS商户号', '操作']
+      },
+      speaker: {
+        filters: [
+          { key: 'sn', label: '设备SN号', type: 'text', placeholder: '请输入设备SN号' },
+          { key: 'codeNo', label: '码牌编号', type: 'text', placeholder: '请输入码牌编号' },
+          { key: 'brandModel', label: '品牌型号', type: 'select', options: ['全部', '博实结/CS50', '其他'] },
+          { key: 'store', label: '绑定门店', type: 'store' }
+        ],
+        columns: ['设备SN号/码牌编号', '终端名称', '绑定门店信息', '品牌型号', '更新时间', '操作']
+      },
+      scanner: {
+        filters: [
+          { key: 'sn', label: '设备SN号', type: 'text', placeholder: '请输入设备序列号' },
+          { key: 'brandModel', label: '品牌型号', type: 'select', options: ['全部', 'N7HD', '扫码王Pro', '其他'] },
+          { key: 'store', label: '绑定门店', type: 'store' }
+        ],
+        columns: ['设备SN号', '终端名称', '绑定门店信息', '品牌型号', '更新时间', '操作']
+      },
+      printer: {
+        filters: [
+          { key: 'sn', label: '设备SN号', type: 'text', placeholder: '请输入设备SN号' },
+          { key: 'brandModel', label: '品牌型号', type: 'select', options: ['全部', '80mm', '58mm', '其他'] },
+          { key: 'store', label: '绑定门店', type: 'store' }
+        ],
+        columns: ['设备SN号', '终端名称', '绑定门店信息', '品牌型号', '更新时间', '操作']
+      }
+    };
+
+    let currentMerchant = null;
+    let filteredMerchants = [...MERCHANTS];
+    let viewMode = 'all';
+    let openMoreMenu = null;
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function switchView(viewId) {
+      document.querySelectorAll('.detail-view').forEach(v => v.classList.remove('active'));
+      document.getElementById(viewId).classList.add('active');
+    }
+
+    function getMerchantStores(merchantId) {
+      return STORE_DATA[merchantId] || [];
+    }
+
+    function storeComboHtml(type) {
+      return `<div class="field store-combo-wrap" data-store-combo="${type}">
+        <label>绑定门店</label>
+        <div class="store-combo">
+          <input type="text" data-filter="store" data-store-input="${type}" placeholder="输入门店号/门店名称选择门店" autocomplete="off" />
+          <div class="store-dropdown" data-store-dropdown="${type}"></div>
+        </div>
+      </div>`;
+    }
+
+    function buildEquipPanels() {
+      const container = document.getElementById('equip-panels');
+      container.innerHTML = Object.entries(EQUIP_PANELS).map(([type, cfg], idx) => {
+        const filters = cfg.filters.map(f => {
+          if (f.type === 'store') return storeComboHtml(type);
+          if (f.type === 'select') {
+            return `<div class="field"><label>${f.label}</label><select data-filter="${f.key}">${f.options.map(o => `<option>${o}</option>`).join('')}</select></div>`;
+          }
+          return `<div class="field"><label>${f.label}</label><input type="text" data-filter="${f.key}" placeholder="${f.placeholder || ''}" /></div>`;
+        }).join('');
+        return `<div class="equip-panel ${idx === 0 ? 'active' : ''}" data-type="${type}">
+          <div class="filter-box"><div class="filter-row">${filters}
+            <div class="filter-actions">
+              <button type="button" class="btn btn-primary equip-search" data-type="${type}">搜索</button>
+              <button type="button" class="btn equip-reset" data-type="${type}">重置</button>
+            </div>
+          </div></div>
+          <div class="table-wrap"><table>
+            <thead><tr>${cfg.columns.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+            <tbody class="equip-tbody" data-type="${type}"></tbody>
+          </table></div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderStoreDropdown(input) {
+      const type = input.dataset.storeInput;
+      const dropdown = document.querySelector(`[data-store-dropdown="${type}"]`);
+      if (!dropdown) return;
+      const stores = getMerchantStores(currentMerchant?.id);
+      const kw = (input.value || '').trim().toLowerCase();
+      const matched = stores.filter(s => !kw || s.storeNo.toLowerCase().includes(kw) || s.name.toLowerCase().includes(kw));
+      dropdown.innerHTML = matched.length
+        ? matched.map(s => `<div class="store-option" data-id="${s.storeNo}" data-name="${s.name}">${fmtStore(s.storeNo, s.name)}</div>`).join('')
+        : '<div class="store-option" style="color:#bbb;cursor:default">无匹配门店</div>';
+      dropdown.classList.add('open');
+    }
+
+    function matchStoreFilter(item, storeVal) {
+      if (!storeVal) return true;
+      const text = fmtStore(item.storeId, item.storeName);
+      return text.includes(storeVal) || item.storeId.includes(storeVal) || item.storeName.includes(storeVal);
+    }
+
+    function filterEquipData(type, list, filters) {
+      return list.filter(item => {
+        if (type === 'code') {
+          if (filters.codeNo && !item.codeNo.includes(filters.codeNo)) return false;
+          if (filters.codeType && filters.codeType !== '全部' && item.codeType !== filters.codeType) return false;
+          if (!matchStoreFilter(item, filters.store)) return false;
+        } else if (type === 'pos') {
+          if (filters.sn && !item.sn.includes(filters.sn)) return false;
+          if (filters.terminalNo && !item.terminalNo.includes(filters.terminalNo)) return false;
+        } else if (type === 'speaker') {
+          if (filters.sn && !item.sn.includes(filters.sn)) return false;
+          if (filters.codeNo && !item.codeNo.includes(filters.codeNo)) return false;
+          if (filters.brandModel && filters.brandModel !== '全部' && item.brandModel !== filters.brandModel) return false;
+          if (!matchStoreFilter(item, filters.store)) return false;
+        } else if (type === 'scanner' || type === 'printer') {
+          if (filters.sn && !item.sn.includes(filters.sn)) return false;
+          if (filters.brandModel && filters.brandModel !== '全部' && item.brandModel !== filters.brandModel) return false;
+          if (!matchStoreFilter(item, filters.store)) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderEquipTable(type) {
+      if (!currentMerchant) return;
+      const panel = document.querySelector(`.equip-panel[data-type="${type}"]`);
+      const filters = {};
+      panel.querySelectorAll('[data-filter]').forEach(el => { filters[el.dataset.filter] = el.value.trim(); });
+      const dataKey = { code: 'codes', pos: 'pos', speaker: 'speakers', scanner: 'scanners', printer: 'printers' }[type];
+      const raw = (EQUIP_DATA[currentMerchant.id] || {})[dataKey] || [];
+      const rows = filterEquipData(type, raw, filters);
+      const tbody = panel.querySelector('.equip-tbody');
+      const colCount = EQUIP_PANELS[type].columns.length;
+
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="${colCount}" class="empty-tip">暂无数据</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map((item, idx) => {
+        const storeInfo = fmtStore(item.storeId, item.storeName);
+        const detailBtn = `<a class="link-detail" data-type="${type}" data-idx="${idx}">详情</a>`;
+        if (type === 'code') {
+          return `<tr data-row-idx="${idx}"><td>${item.codeNo}</td><td>${dash(item.codeName)}</td><td>${storeInfo}</td><td>${item.codeType}</td><td>${item.updateTime}</td><td>${detailBtn}</td></tr>`;
+        }
+        if (type === 'pos') {
+          return `<tr data-row-idx="${idx}"><td>${item.sn}</td><td>${item.terminalNo}</td><td>${item.terminalName}</td><td>${storeInfo}</td><td>${item.posMerchantNo}</td><td>${detailBtn}</td></tr>`;
+        }
+        if (type === 'speaker') {
+          return `<tr data-row-idx="${idx}"><td>${item.sn} / ${item.codeNo}</td><td>${dash(item.terminalName)}</td><td>${storeInfo}</td><td>${dash(item.brandModel)}</td><td>${item.updateTime}</td><td>${detailBtn}</td></tr>`;
+        }
+        return `<tr data-row-idx="${idx}"><td>${item.sn}</td><td>${dash(item.terminalName)}</td><td>${storeInfo}</td><td>${dash(item.brandModel)}</td><td>${item.updateTime}</td><td>${detailBtn}</td></tr>`;
+      }).join('');
+
+      tbody._filteredRows = rows;
+    }
+
+    function renderAllEquipTables() {
+      Object.keys(EQUIP_PANELS).forEach(renderEquipTable);
+    }
+
+    function descRow(k, v) {
+      const val = v === undefined || v === null || v === '' ? '-' : v;
+      const isTag = val === '已绑定' || val === '正常';
+      return `<div class="k">${k}</div><div class="v">${isTag ? `<span class="tag-ok">${val}</span>` : val}</div>`;
+    }
+
+    function relatedCodesTable(codes, readOnly = true) {
+      if (!codes || !codes.length) return '<div style="color:#bbb;font-size:12px">暂无关联码牌</div>';
+      return `<table class="mini-table"><thead><tr><th>码牌编号</th><th>码牌名称</th><th>是否关联</th></tr></thead><tbody>
+        ${codes.map(c => `<tr><td>${c.codeNo}</td><td>${dash(c.codeName)}</td><td class="${c.associated ? 'assoc-yes' : 'assoc-no'}">${c.associated ? '是' : '否'}</td></tr>`).join('')}
+      </tbody></table>`;
+    }
+
+    function openDrawerUI() {
+      document.getElementById('drawer-mask').classList.add('open');
+      document.getElementById('drawer').classList.add('open');
+    }
+
+    function closeDrawer() {
+      document.getElementById('drawer-mask').classList.remove('open');
+      document.getElementById('drawer').classList.remove('open');
+      setDrawerWide(false);
+    }
+
+    function openStoreDetailDrawer(store) {
+      setDrawerWide(false);
+      document.getElementById('drawer-title').textContent = '门店详情';
+      document.getElementById('drawer-body').innerHTML = `
+        <div class="info-section-title">门店信息</div>
+        <div class="info-grid-2col">
+          <div class="info-item">
+            <div class="label">门店名称</div>
+            <div class="value">${store.name} (${store.storeNo})</div>
+          </div>
+          <div class="info-item">
+            <div class="label">门店编号</div>
+            <div class="value">${store.storeNo}</div>
+          </div>
+          <div class="info-item full">
+            <div class="label">门店位置</div>
+            <div class="value">${store.location}</div>
+          </div>
+          <div class="info-item">
+            <div class="label">门店店长</div>
+            <div class="value">${store.manager}</div>
+          </div>
+          <div class="info-item">
+            <div class="label">联系电话</div>
+            <div class="value">${phoneToggleHtml(store.phone, 'store-phone')}</div>
+          </div>
+          <div class="info-item">
+            <div class="label">员工编号</div>
+            <div class="value">${store.employeeNo}</div>
+          </div>
+        </div>`;
+      document.getElementById('drawer-footer').innerHTML = '';
+      bindPhoneToggle('store-phone-display', 'store-phone-toggle', store.phone);
+      openDrawerUI();
+    }
+
+    function openMerchantDetail(merchantId) {
+      const m = MERCHANTS.find(x => x.id === merchantId);
+      const d = MERCHANT_DETAILS[merchantId];
+      if (!m || !d) return;
+      setDrawerWide(true);
+      document.getElementById('drawer-title').textContent = '子商户详情';
+      document.getElementById('drawer-body').innerHTML = `
+        <div class="drawer-merchant-head">
+          <div class="drawer-merchant-title">
+            <span class="name">${m.name}</span>
+            <span class="merchant-badge">${d.type}</span>
+          </div>
+          <div class="drawer-merchant-sub">详情</div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-hd">基础信息</div>
+          <div class="detail-fields">
+            <div class="detail-field"><div class="label">盛付通商户号</div><div class="value">${m.id}</div></div>
+            <div class="detail-field full"><div class="label">行业类目</div><div class="value">${d.industry}</div></div>
+            <div class="detail-field full"><div class="label">经营地址</div><div class="value">${d.address}</div></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-hd">联系人信息</div>
+          <div class="detail-fields">
+            <div class="detail-field"><div class="label">联系人姓名</div><div class="value">${d.contactName}</div></div>
+            <div class="detail-field">
+              <div class="label">联系人手机</div>
+              <div class="value">${phoneToggleHtml(d.contactPhone, 'merchant-phone')}</div>
+            </div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-hd">资质信息</div>
+          <div class="detail-fields">
+            <div class="detail-field"><div class="label">法人姓名</div><div class="value">${d.legalName}</div></div>
+            <div class="detail-field"><div class="label">法人证件类型</div><div class="value">${d.legalIdType}</div></div>
+            <div class="detail-field"><div class="label">法人证件号</div><div class="value">${maskIdNo(d.legalIdNo)}</div></div>
+            <div class="detail-field"><div class="label">法人证件有效期</div><div class="value">${d.legalIdExpiry}</div></div>
+          </div>
+        </div>`;
+      document.getElementById('drawer-footer').innerHTML = '';
+      bindPhoneToggle('merchant-phone-display', 'merchant-phone-toggle', d.contactPhone);
+      openDrawerUI();
+    }
+
+    function openDrawer(type, item) {
+      setDrawerWide(false);
+      document.getElementById('drawer-title').textContent = '详情';
+      const body = document.getElementById('drawer-body');
+      const footer = document.getElementById('drawer-footer');
+      let html = '';
+
+      if (type === 'code') {
+        html = `<div class="desc-grid">
+          ${descRow('码牌编号', item.codeNo)}
+          ${descRow('码牌类型', item.codeType)}
+          ${descRow('状态', item.status)}
+          ${descRow('绑定商户', fmtStore(item.bindMerchantId, item.bindMerchantName))}
+          ${descRow('绑定门店', fmtStore(item.storeId, item.storeName))}
+          ${descRow('码牌名称', dash(item.codeName))}
+        </div>
+        <div class="qr-preview">
+          <div class="logo">盛意旺</div>
+          <div class="store-name">${item.storeName}</div>
+          <div class="qr-box">[二维码预览]</div>
+          <div class="qr-no">No. ${item.codeNo}</div>
+          <div class="pay-text">扫码付款</div>
+          <div class="pay-icons">银联 · 微信 · 支付宝</div>
+        </div>`;
+        footer.innerHTML = `<button type="button" class="btn" onclick="showToast('码牌图片已导出（演示）')">导出码牌图片</button>
+          <button type="button" class="btn btn-primary" onclick="showToast('链接已复制（演示）')">复制链接</button>`;
+      } else if (type === 'pos') {
+        html = `<div class="desc-grid">
+          ${descRow('设备SN号', item.sn)}
+          ${descRow('终端品牌及型号', dash(item.brandModel))}
+          ${descRow('状态', item.status)}
+          ${descRow('绑定商户', fmtStore(item.bindMerchantId, item.bindMerchantName))}
+          ${descRow('终端号', item.terminalNo)}
+          ${descRow('终端名称', item.terminalName)}
+          ${descRow('终端别名', dash(item.terminalAlias))}
+          ${descRow('小票打印名称', item.receiptName)}
+          ${descRow('终端安装地址', item.installAddress)}
+          ${descRow('POS商户号', item.posMerchantNo)}
+        </div>
+        <div class="section-title">关联码牌</div>
+        <div class="section-tip">仅能关联与当前设备绑定商户/门店一致的码牌</div>
+        ${relatedCodesTable(item.relatedCodes)}`;
+        footer.innerHTML = `<button type="button" class="btn" id="drawer-close-btn">关闭</button>`;
+      } else if (type === 'speaker') {
+        html = `<div class="desc-grid">
+          ${descRow('设备SN号', item.sn)}
+          ${descRow('码牌编号', item.codeNo)}
+          ${descRow('终端品牌及型号', dash(item.brandModel))}
+          ${descRow('状态', item.status)}
+          ${descRow('绑定商户', fmtStore(item.bindMerchantId, item.bindMerchantName))}
+          ${descRow('绑定门店', fmtStore(item.storeId, item.storeName))}
+          ${descRow('终端名称', dash(item.terminalName))}
+        </div>
+        <div class="section-title">关联码牌</div>
+        <div class="section-tip">仅能关联与当前设备绑定商户/门店一致的码牌</div>
+        ${relatedCodesTable(item.relatedCodes)}`;
+        footer.innerHTML = `<button type="button" class="btn" id="drawer-close-btn">关闭</button>`;
+      } else if (type === 'scanner') {
+        html = `<div class="desc-grid">
+          ${descRow('设备序列号', item.sn)}
+          ${descRow('终端品牌及型号', dash(item.brandModel))}
+          ${descRow('状态', item.status)}
+          ${descRow('绑定商户', fmtStore(item.bindMerchantId, item.bindMerchantName))}
+          ${descRow('绑定门店', fmtStore(item.storeId, item.storeName))}
+          ${descRow('终端名称', dash(item.terminalName))}
+        </div>`;
+        footer.innerHTML = `<button type="button" class="btn" id="drawer-close-btn">关闭</button>`;
+      } else if (type === 'printer') {
+        html = `<div class="desc-grid">
+          ${descRow('设备序列号', item.sn)}
+          ${descRow('终端品牌及型号', dash(item.brandModel))}
+          ${descRow('状态', item.status)}
+          ${descRow('绑定商户', fmtStore(item.bindMerchantId, item.bindMerchantName))}
+          ${descRow('绑定门店', fmtStore(item.storeId, item.storeName))}
+          ${descRow('终端名称', dash(item.terminalName))}
+        </div>
+        <div class="section-title">打印设置</div>
+        <div class="print-settings">
+          <div class="print-row"><span class="k">打印份数</span><span>${item.printCopies || '1份'}</span></div>
+          <div class="print-row"><span class="k">客服电话</span><span>${item.servicePhone || '-'}</span></div>
+          <div class="print-row"><span class="k">打印退款</span><span>${item.printRefund || '关闭'}</span></div>
+        </div>
+        <div class="section-title">关联码牌</div>
+        <div class="section-tip">仅能关联与当前设备绑定商户/门店一致的码牌</div>
+        ${relatedCodesTable(item.relatedCodes)}`;
+        footer.innerHTML = `<button type="button" class="btn" id="drawer-close-btn">关闭</button>`;
+      }
+
+      body.innerHTML = html;
+      openDrawerUI();
+      const closeBtn = document.getElementById('drawer-close-btn');
+      if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+    }
+
+    function renderMerchants() {
+      const list = viewMode === 'direct'
+        ? filteredMerchants.filter(m => m.level !== '上海益充电子商务有限公司')
+        : filteredMerchants;
+      document.getElementById('page-total').textContent = '共 ' + list.length + ' 条';
+      document.getElementById('merchant-tbody').innerHTML = list.map(m => `
+        <tr>
+          <td>${m.id}</td><td>${m.name}</td><td>${m.shortName}</td><td>${m.level}</td><td>${m.updateTime}</td>
+          <td class="op-links">
+            <a class="link-merchant-detail" data-id="${m.id}">查看详情</a>
+            <a class="link-equip" data-id="${m.id}">收银机具详情</a>
+            <span class="more-wrap">
+              <button type="button" class="more-btn">更多 ▾</button>
+              <div class="more-menu">
+                <a href="#" class="link-change">变更层级</a>
+                <a href="#" class="link-unbind">解除绑定</a>
+                <a class="link-store" data-id="${m.id}">门店详情</a>
+              </div>
+            </span>
+          </td>
+        </tr>
+      `).join('');
+
+      document.querySelectorAll('.link-merchant-detail').forEach(a => a.addEventListener('click', e => { e.preventDefault(); openMerchantDetail(a.dataset.id); }));
+      document.querySelectorAll('.link-equip').forEach(a => a.addEventListener('click', e => { e.preventDefault(); openEquipment(a.dataset.id); }));
+      document.querySelectorAll('.link-store').forEach(a => a.addEventListener('click', e => { e.preventDefault(); closeMoreMenus(); openStores(a.dataset.id); }));
+      document.querySelectorAll('.more-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const wrap = btn.closest('.more-wrap');
+          const wasOpen = wrap.classList.contains('open');
+          closeMoreMenus();
+          if (!wasOpen) { wrap.classList.add('open'); openMoreMenu = wrap; }
+        });
+      });
+    }
+
+    function closeMoreMenus() {
+      document.querySelectorAll('.more-wrap.open').forEach(w => w.classList.remove('open'));
+      openMoreMenu = null;
+    }
+
+    function openEquipment(merchantId) {
+      currentMerchant = MERCHANTS.find(m => m.id === merchantId);
+      document.getElementById('equip-title').textContent = '收银机具详情 - ' + currentMerchant.shortName;
+      document.getElementById('equip-meta').textContent = `商户号：${currentMerchant.id} ｜ 商户名称：${currentMerchant.name}`;
+      document.querySelectorAll('.equip-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
+      document.querySelectorAll('.equip-panel').forEach((p, i) => p.classList.toggle('active', i === 0));
+      renderAllEquipTables();
+      switchView('view-equipment');
+    }
+
+    function openStores(merchantId) {
+      currentMerchant = MERCHANTS.find(m => m.id === merchantId);
+      document.getElementById('store-title').textContent = '门店详情 - ' + currentMerchant.shortName;
+      document.getElementById('store-meta').textContent = `商户号：${currentMerchant.id} ｜ 商户名称：${currentMerchant.name}`;
+      ['store-f-no', 'store-f-name'].forEach(id => document.getElementById(id).value = '');
+      renderStoreTable();
+      switchView('view-stores');
+    }
+
+    function renderStoreTable() {
+      const stores = STORE_DATA[currentMerchant.id] || [];
+      const noQ = document.getElementById('store-f-no').value.trim();
+      const nameQ = document.getElementById('store-f-name').value.trim();
+      const filtered = stores.filter(s => {
+        if (noQ && !s.storeNo.includes(noQ)) return false;
+        if (nameQ && !s.name.includes(nameQ)) return false;
+        return true;
+      });
+      document.getElementById('store-page-total').textContent = '共 ' + filtered.length + ' 条';
+      const tbody = document.getElementById('store-tbody');
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-tip">暂无门店数据</td></tr>';
+        tbody._filteredRows = [];
+        return;
+      }
+      tbody.innerHTML = filtered.map((s, idx) => `<tr>
+        <td>${s.internalNo}</td><td>${s.storeNo}</td><td>${s.name}</td><td>${s.manager}</td><td>${s.createTime}</td>
+        <td><a class="link-store-detail" data-idx="${idx}">详情</a></td>
+      </tr>`).join('');
+      tbody._filteredRows = filtered;
+      tbody.querySelectorAll('.link-store-detail').forEach(a => {
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          const store = tbody._filteredRows[parseInt(a.dataset.idx, 10)];
+          if (store) openStoreDetailDrawer(store);
+        });
+      });
+    }
+
+    function exportPosExcel() {
+      const headers = ['终端号', '终端名称', 'POS商户号', '盛付通商户号', '商户名称', '小票打印名称', '终端地址', '终端状态', '创建时间'];
+      const rows = POS_EXPORT.map(r => [r.terminalNo, r.terminalName, r.posMerchantNo, r.sftMerchantNo, r.merchantName, r.receiptName, r.terminalAddress, r.terminalStatus, r.createTime]);
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = headers.map(() => ({ wch: 18 }));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'POS终端信息');
+      XLSX.writeFile(wb, '所有商户POS终端信息_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+      showToast('已导出 ' + POS_EXPORT.length + ' 条POS终端信息');
+    }
+
+    buildEquipPanels();
+    renderMerchants();
+
+    document.getElementById('btn-search').addEventListener('click', () => {
+      const idQ = document.getElementById('search-id').value.trim();
+      const nameQ = document.getElementById('search-name').value.trim();
+      filteredMerchants = MERCHANTS.filter(m => (!idQ || m.id.includes(idQ)) && (!nameQ || m.name.includes(nameQ)));
+      renderMerchants();
+    });
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      document.getElementById('search-id').value = '';
+      document.getElementById('search-name').value = '';
+      filteredMerchants = [...MERCHANTS];
+      renderMerchants();
+    });
+    document.querySelectorAll('.view-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        viewMode = tab.dataset.mode;
+        renderMerchants();
+      });
+    });
+    document.getElementById('btn-export-pos').addEventListener('click', exportPosExcel);
+    document.getElementById('back-from-equip').addEventListener('click', () => switchView('view-main'));
+    document.getElementById('back-from-stores').addEventListener('click', () => switchView('view-main'));
+    document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+    document.getElementById('drawer-mask').addEventListener('click', closeDrawer);
+    document.addEventListener('click', () => closeMoreMenus());
+
+    document.getElementById('equip-tabs').addEventListener('click', e => {
+      const tab = e.target.closest('.equip-tab');
+      if (!tab) return;
+      document.querySelectorAll('.equip-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.equip-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelector(`.equip-panel[data-type="${tab.dataset.type}"]`).classList.add('active');
+    });
+
+    document.getElementById('equip-panels').addEventListener('focusin', e => {
+      if (e.target.matches('[data-store-input]')) renderStoreDropdown(e.target);
+    });
+    document.getElementById('equip-panels').addEventListener('input', e => {
+      if (e.target.matches('[data-store-input]')) renderStoreDropdown(e.target);
+    });
+    document.getElementById('equip-panels').addEventListener('click', e => {
+      const storeOpt = e.target.closest('.store-option');
+      if (storeOpt && storeOpt.dataset.id) {
+        const combo = storeOpt.closest('.store-combo');
+        const input = combo.querySelector('[data-store-input]');
+        input.value = fmtStore(storeOpt.dataset.id, storeOpt.dataset.name);
+        combo.querySelector('.store-dropdown').classList.remove('open');
+        renderEquipTable(input.dataset.storeInput);
+        return;
+      }
+      if (e.target.classList.contains('equip-search')) renderEquipTable(e.target.dataset.type);
+      if (e.target.classList.contains('equip-reset')) {
+        const panel = e.target.closest('.equip-panel');
+        panel.querySelectorAll('input').forEach(i => i.value = '');
+        panel.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+        renderEquipTable(e.target.dataset.type);
+      }
+      if (e.target.classList.contains('link-detail')) {
+        e.preventDefault();
+        const type = e.target.dataset.type;
+        const tbody = e.target.closest('tbody');
+        const idx = parseInt(e.target.dataset.idx, 10);
+        const item = tbody._filteredRows[idx];
+        if (item) openDrawer(type, item);
+      }
+    });
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.store-combo')) {
+        document.querySelectorAll('.store-dropdown').forEach(d => d.classList.remove('open'));
+      }
+    });
+
+    document.getElementById('store-btn-search').addEventListener('click', renderStoreTable);
+    document.getElementById('store-btn-reset').addEventListener('click', () => {
+      ['store-f-no', 'store-f-name'].forEach(id => document.getElementById(id).value = '');
+      renderStoreTable();
+    });
+  </script>
+</body>
+</html>
