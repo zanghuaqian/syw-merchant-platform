@@ -6,9 +6,9 @@
   <title>子商户管理 - 盛意旺商户平台</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="../assets/product-annotation/product-annotation.css">
+  <link rel="stylesheet" href="../.claude/skills/product-auto-annotation/assets/product-annotation.css">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="../assets/product-annotation/product-annotation.js" defer></script>
+  <script src="../.claude/skills/product-auto-annotation/assets/product-annotation.js" defer></script>
   <style>
     :root {
       --nav-bg: #0f2744; --nav-hover: #1a3a5c; --accent: #1677ff; --accent-hover: #4096ff;
@@ -221,6 +221,36 @@
     }
     .toggle-eye:hover { color: var(--accent); background: #f0f7ff; }
     .eye-icon { width: 18px; height: 18px; display: block; }
+
+    .detail-top-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;
+    }
+    @media (max-width: 640px) { .detail-top-row { grid-template-columns: 1fr; } }
+    .detail-card {
+      border: 1px solid #f0f0f0; border-radius: var(--radius); padding: 16px 18px; background: #fafafa;
+    }
+    .detail-card .detail-section-hd { margin-bottom: 12px; padding-bottom: 0; border-bottom: none; }
+    .contact-info-hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .contact-info-title-row { display: inline-flex; align-items: center; flex-wrap: wrap; }
+
+    .pwd-modal-mask {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 5000;
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    .pwd-modal-mask.open { display: flex; }
+    .pwd-modal {
+      width: min(400px, 100%); background: #fff; border-radius: 8px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.18); padding: 24px;
+    }
+    .pwd-modal h4 { margin: 0 0 8px; font-size: 16px; font-weight: 600; }
+    .pwd-modal .pwd-tip { margin: 0 0 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .pwd-modal .pwd-user { color: var(--text); font-weight: 500; }
+    .pwd-modal input {
+      width: 100%; height: 36px; padding: 0 12px; border: 1px solid var(--border);
+      border-radius: var(--radius); font-size: 14px; margin-bottom: 20px;
+    }
+    .pwd-modal input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(22,119,255,.15); }
+    .pwd-modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
   </style>
 </head>
 <body>
@@ -372,13 +402,24 @@
     <i class="bi bi-lightbulb-fill"></i>
   </span>
   <div class="product-tip">
-    <div class="product-tip-content">子商户「查看详情」以右侧抽屉展示基础/联系人/资质信息；联系人手机默认掩码，点击闭眼/睁眼图标切换明文，不可编辑</div>
+    <div class="product-tip-content">点击操作列「查看详情」打开右侧抽屉，双栏展示基础信息与联系人信息，下方展示资质信息；内容为只读不可编辑</div>
   </div>
   <div class="drawer-mask" id="drawer-mask"></div>
   <div class="drawer" id="drawer">
     <div class="drawer-hd"><h3 id="drawer-title">详情</h3><button type="button" class="drawer-close" id="drawer-close">×</button></div>
     <div class="drawer-bd" id="drawer-body"></div>
     <div class="drawer-ft" id="drawer-footer"></div>
+  </div>
+  <div class="pwd-modal-mask" id="pwd-modal-mask" aria-hidden="true">
+    <div class="pwd-modal" role="dialog" aria-labelledby="pwd-modal-title" aria-modal="true">
+      <h4 id="pwd-modal-title">身份验证</h4>
+      <p class="pwd-tip">查看联系人手机、邮箱等敏感信息需验证登录密码。<br>当前用户：<span class="pwd-user" id="pwd-modal-user"></span></p>
+      <input type="password" id="pwd-input" placeholder="请输入登录密码" autocomplete="current-password" />
+      <div class="pwd-modal-actions">
+        <button type="button" class="btn" id="pwd-cancel">取消</button>
+        <button type="button" class="btn btn-primary" id="pwd-confirm">确认</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -392,33 +433,43 @@
 
     const MERCHANT_DETAILS = {
       '45989756': {
-        type: '小微', industry: '家居/建材-未列入其他代码的建材批发(批发商)',
-        address: '上海市浦东新区张江高科技园区祖冲之路887号',
-        contactName: '张益充', contactPhone: '13812341234',
+        type: '企业', industry: '商业服务-计算机网络/信息服务',
+        address: '上海市浦东新区张衡路666号9楼',
+        registeredName: '上海益充电子商务有限公司',
+        creditCode: '913101156988455101', licenseExpiry: '2010-01-05 至 2040-01-04',
+        contactName: '张益充', contactPhone: '13712346360', contactEmail: 'zhangyichong@shengpay.com',
         legalName: '张益充', legalIdType: '身份证', legalIdNo: '310115198801011234', legalIdExpiry: '2018-06-15 至 2038-06-15'
       },
       '45989757': {
-        type: '小微', industry: '批发和零售业-其他批发业',
+        type: '企业', industry: '批发和零售业-其他批发业',
         address: '北京市朝阳区建国路88号SOHO现代城',
-        contactName: '王朝阳', contactPhone: '13690123456',
+        registeredName: '上海益充电子商务有限公司北京分公司',
+        creditCode: '911101056988455102', licenseExpiry: '2012-03-10 至 2042-03-09',
+        contactName: '王朝阳', contactPhone: '13690123456', contactEmail: 'wangchaoyang@shengpay.com',
         legalName: '王朝阳', legalIdType: '身份证', legalIdNo: '110105198902021122', legalIdExpiry: '2020-01-10 至 2040-01-10'
       },
       '45989758': {
-        type: '小微', industry: '批发和零售业-百货零售',
+        type: '企业', industry: '批发和零售业-百货零售',
         address: '广州市天河区天河路385号太古汇',
-        contactName: '陈天河', contactPhone: '13734567890',
+        registeredName: '上海益充电子商务有限公司广州分公司',
+        creditCode: '914401066988455103', licenseExpiry: '2015-06-20 至 2045-06-19',
+        contactName: '陈天河', contactPhone: '13734567890', contactEmail: 'chentianhe@shengpay.com',
         legalName: '陈天河', legalIdType: '身份证', legalIdNo: '440106199003031133', legalIdExpiry: '2019-05-20 至 2039-05-20'
       },
       '45989759': {
-        type: '小微', industry: '信息传输、软件和信息技术服务业',
+        type: '企业', industry: '信息传输、软件和信息技术服务业',
         address: '深圳市南山区科技园南区高新南一道',
-        contactName: '刘南山', contactPhone: '13578901234',
+        registeredName: '上海益充电子商务有限公司深圳分公司',
+        creditCode: '914403006988455104', licenseExpiry: '2018-08-01 至 2048-07-31',
+        contactName: '刘南山', contactPhone: '13578901234', contactEmail: 'liunanshan@shengpay.com',
         legalName: '刘南山', legalIdType: '身份证', legalIdNo: '440305199104041144', legalIdExpiry: '2021-08-01 至 2041-08-01'
       },
       '45989760': {
-        type: '小微', industry: '批发和零售业-服装零售',
+        type: '企业', industry: '批发和零售业-服装零售',
         address: '杭州市西湖区文三路478号华星科技大厦',
-        contactName: '赵西湖', contactPhone: '13323456789',
+        registeredName: '上海益充电子商务有限公司杭州分公司',
+        creditCode: '913301066988455105', licenseExpiry: '2016-12-12 至 2046-12-11',
+        contactName: '赵西湖', contactPhone: '13323456789', contactEmail: 'zhaoxihu@shengpay.com',
         legalName: '赵西湖', legalIdType: '身份证', legalIdNo: '330106199205051155', legalIdExpiry: '2017-12-12 至 2037-12-12'
       }
     };
@@ -450,6 +501,13 @@
       return phone.slice(0, 3) + '****' + phone.slice(-4);
     }
 
+    function maskEmail(email) {
+      if (!email || !email.includes('@')) return email || '-';
+      const [local, domain] = email.split('@');
+      const visible = local.length <= 3 ? local : local.slice(-3);
+      return '*'.repeat(6) + visible + '@' + domain;
+    }
+
     function maskIdNo(idNo) {
       if (!idNo || idNo.length < 8) return idNo || '-';
       return idNo.slice(0, 2) + '*'.repeat(Math.max(idNo.length - 6, 4)) + idNo.slice(-4);
@@ -458,10 +516,24 @@
     const EYE_OPEN = '<svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
     const EYE_CLOSED = '<svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.584 10.587a2 2 0 0 0 2.828 2.828"/><path d="M9.363 5.365A10.07 10.07 0 0 1 12 5c3.87 0 7 3.13 7 7 0 1.01-.21 1.97-.59 2.84"/><path d="M6.5 6.5C4.5 8.5 2 12 2 12s3.5 7 10 7c1.2 0 2.35-.2 3.4-.55"/><path d="M14.12 14.12A3 3 0 0 1 9.88 9.88"/></svg>';
 
+    const MOCK_LOGIN_PASSWORD = '123456';
+    const CURRENT_LOGIN_USER = '上海益充电子商务有限公司 (39162731)';
+    let contactSensitiveVerified = false;
+    let merchantContactRevealed = false;
+    let pwdVerifyCallback = null;
+
     function phoneToggleHtml(phone, prefix) {
+      return sensitiveFieldHtml(phone, prefix, maskPhone, '查看联系人手机');
+    }
+
+    function emailToggleHtml(email, prefix) {
+      return sensitiveFieldHtml(email, prefix, maskEmail, '查看联系邮箱');
+    }
+
+    function sensitiveFieldHtml(value, prefix, maskFn, ariaLabel) {
       return `<span class="phone-row">
-        <span id="${prefix}-display">${maskPhone(phone)}</span>
-        <button type="button" class="toggle-eye" id="${prefix}-toggle" aria-label="切换手机号显示" title="切换显示">${EYE_CLOSED}</button>
+        <span id="${prefix}-display">${maskFn(value)}</span>
+        <button type="button" class="toggle-eye" id="${prefix}-toggle" aria-label="${ariaLabel}" title="${ariaLabel}">${EYE_CLOSED}</button>
       </span>`;
     }
 
@@ -471,11 +543,80 @@
       if (!phoneEl || !toggleBtn) return;
       let masked = true;
       toggleBtn.innerHTML = EYE_CLOSED;
-      toggleBtn.addEventListener('click', () => {
+      toggleBtn.addEventListener('click', e => {
+        e.stopPropagation();
         masked = !masked;
         phoneEl.textContent = masked ? maskPhone(phone) : phone;
         toggleBtn.innerHTML = masked ? EYE_CLOSED : EYE_OPEN;
       });
+    }
+
+    function bindMerchantContactSensitive({ phone, email }) {
+      const phoneEl = document.getElementById('merchant-phone-display');
+      const emailEl = document.getElementById('merchant-email-display');
+      const toggleBtn = document.getElementById('merchant-contact-toggle');
+      if (!phoneEl || !emailEl || !toggleBtn) return;
+
+      const render = () => {
+        phoneEl.textContent = merchantContactRevealed ? phone : maskPhone(phone);
+        emailEl.textContent = merchantContactRevealed ? email : maskEmail(email);
+        toggleBtn.innerHTML = merchantContactRevealed ? EYE_OPEN : EYE_CLOSED;
+        toggleBtn.title = merchantContactRevealed ? '隐藏联系人手机与邮箱' : '查看联系人手机与邮箱';
+        toggleBtn.setAttribute('aria-label', toggleBtn.title);
+      };
+
+      render();
+      toggleBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (merchantContactRevealed) {
+          merchantContactRevealed = false;
+          render();
+          return;
+        }
+        requestSensitiveAccess(() => {
+          merchantContactRevealed = true;
+          render();
+        });
+      });
+    }
+
+    function requestSensitiveAccess(onSuccess) {
+      if (contactSensitiveVerified) {
+        onSuccess();
+        return;
+      }
+      pwdVerifyCallback = onSuccess;
+      const modal = document.getElementById('pwd-modal-mask');
+      document.getElementById('pwd-modal-user').textContent = CURRENT_LOGIN_USER;
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      const input = document.getElementById('pwd-input');
+      input.value = '';
+      setTimeout(() => input.focus(), 80);
+    }
+
+    function hidePasswordModal() {
+      const modal = document.getElementById('pwd-modal-mask');
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      pwdVerifyCallback = null;
+    }
+
+    function submitPasswordVerify() {
+      const pwd = document.getElementById('pwd-input').value.trim();
+      if (!pwd) {
+        showToast('请输入登录密码');
+        return;
+      }
+      if (pwd !== MOCK_LOGIN_PASSWORD) {
+        showToast('密码验证失败，请重试');
+        return;
+      }
+      contactSensitiveVerified = true;
+      const cb = pwdVerifyCallback;
+      hidePasswordModal();
+      if (cb) cb();
     }
 
     function setDrawerWide(wide) {
@@ -735,10 +876,16 @@
       document.getElementById('drawer-mask').classList.remove('open');
       document.getElementById('drawer').classList.remove('open');
       setDrawerWide(false);
+      contactSensitiveVerified = false;
+      merchantContactRevealed = false;
+      hidePasswordModal();
     }
 
     function openStoreDetailDrawer(store) {
       setDrawerWide(false);
+      contactSensitiveVerified = false;
+      merchantContactRevealed = false;
+      hidePasswordModal();
       document.getElementById('drawer-title').textContent = '门店详情';
       document.getElementById('drawer-body').innerHTML = `
         <div class="info-section-title">门店信息</div>
@@ -777,37 +924,56 @@
       const m = MERCHANTS.find(x => x.id === merchantId);
       const d = MERCHANT_DETAILS[merchantId];
       if (!m || !d) return;
+      contactSensitiveVerified = false;
+      merchantContactRevealed = false;
       setDrawerWide(true);
       document.getElementById('drawer-title').textContent = '子商户详情';
       document.getElementById('drawer-body').innerHTML = `
         <div class="drawer-merchant-head">
           <div class="drawer-merchant-title">
-            <span class="name">${m.name}</span>
+            <span class="name">${m.shortName}</span>
             <span class="merchant-badge">${d.type}</span>
           </div>
-          <div class="drawer-merchant-sub">详情</div>
+          <div class="drawer-merchant-sub">${d.registeredName || m.name}</div>
         </div>
-        <div class="detail-section">
-          <div class="detail-section-hd">基础信息</div>
-          <div class="detail-fields">
-            <div class="detail-field"><div class="label">盛付通商户号</div><div class="value">${m.id}</div></div>
-            <div class="detail-field full"><div class="label">行业类目</div><div class="value">${d.industry}</div></div>
-            <div class="detail-field full"><div class="label">经营地址</div><div class="value">${d.address}</div></div>
+        <div class="detail-top-row">
+          <div class="detail-card">
+            <div class="detail-section-hd">基础信息</div>
+            <div class="detail-fields" style="grid-template-columns:1fr">
+              <div class="detail-field"><div class="label">盛付通商户号</div><div class="value">${m.id}</div></div>
+              <div class="detail-field"><div class="label">行业类目</div><div class="value">${d.industry}</div></div>
+              <div class="detail-field"><div class="label">经营地址</div><div class="value">${d.address}</div></div>
+            </div>
           </div>
-        </div>
-        <div class="detail-section">
-          <div class="detail-section-hd">联系人信息</div>
-          <div class="detail-fields">
-            <div class="detail-field"><div class="label">联系人姓名</div><div class="value">${d.contactName}</div></div>
-            <div class="detail-field">
-              <div class="label">联系人手机</div>
-              <div class="value">${phoneToggleHtml(d.contactPhone, 'merchant-phone')}</div>
+          <div class="detail-card">
+            <div class="detail-section-hd contact-info-hd">
+              <div class="contact-info-title-row">
+                <span>联系人信息</span>
+                <span class="tooltip-icon"><i class="bi bi-lightbulb-fill"></i></span>
+                <div class="product-tip"><div class="product-tip-content">联系人手机、邮箱默认掩码；点击右侧眼睛图标需验证当前登录用户密码，通过后同时展示明文，再次点击恢复掩码</div></div>
+              </div>
+              <button type="button" class="toggle-eye" id="merchant-contact-toggle" aria-label="查看联系人手机与邮箱" title="查看联系人手机与邮箱">${EYE_CLOSED}</button>
+            </div>
+            <div class="detail-fields" style="grid-template-columns:1fr">
+              <div class="detail-field"><div class="label">联系人姓名</div><div class="value">${d.contactName}</div></div>
+              <div class="detail-field">
+                <div class="label">联系人手机</div>
+                <div class="value"><span id="merchant-phone-display">${maskPhone(d.contactPhone)}</span></div>
+              </div>
+              <div class="detail-field">
+                <div class="label">联系邮箱</div>
+                <div class="value"><span id="merchant-email-display">${maskEmail(d.contactEmail)}</span></div>
+              </div>
             </div>
           </div>
         </div>
         <div class="detail-section">
           <div class="detail-section-hd">资质信息</div>
           <div class="detail-fields">
+            <div class="detail-field"><div class="label">商户类型</div><div class="value">${d.type}</div></div>
+            <div class="detail-field"><div class="label">注册名称</div><div class="value">${d.registeredName || m.name}</div></div>
+            <div class="detail-field"><div class="label">统一社会信用代码</div><div class="value">${d.creditCode || '-'}</div></div>
+            <div class="detail-field"><div class="label">营业执照有效期</div><div class="value">${d.licenseExpiry || '-'}</div></div>
             <div class="detail-field"><div class="label">法人姓名</div><div class="value">${d.legalName}</div></div>
             <div class="detail-field"><div class="label">法人证件类型</div><div class="value">${d.legalIdType}</div></div>
             <div class="detail-field"><div class="label">法人证件号</div><div class="value">${maskIdNo(d.legalIdNo)}</div></div>
@@ -815,8 +981,9 @@
           </div>
         </div>`;
       document.getElementById('drawer-footer').innerHTML = '';
-      bindPhoneToggle('merchant-phone-display', 'merchant-phone-toggle', d.contactPhone);
+      bindMerchantContactSensitive({ phone: d.contactPhone, email: d.contactEmail });
       openDrawerUI();
+      if (typeof updateTooltipPosition === 'function') updateTooltipPosition();
     }
 
     function openDrawer(type, item) {
@@ -1043,6 +1210,15 @@
     document.getElementById('back-from-stores').addEventListener('click', () => switchView('view-main'));
     document.getElementById('drawer-close').addEventListener('click', closeDrawer);
     document.getElementById('drawer-mask').addEventListener('click', closeDrawer);
+    document.getElementById('pwd-cancel').addEventListener('click', hidePasswordModal);
+    document.getElementById('pwd-confirm').addEventListener('click', submitPasswordVerify);
+    document.getElementById('pwd-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitPasswordVerify();
+      if (e.key === 'Escape') hidePasswordModal();
+    });
+    document.getElementById('pwd-modal-mask').addEventListener('click', e => {
+      if (e.target.id === 'pwd-modal-mask') hidePasswordModal();
+    });
     document.addEventListener('click', () => closeMoreMenus());
 
     document.getElementById('equip-tabs').addEventListener('click', e => {
